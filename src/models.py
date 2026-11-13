@@ -1,14 +1,17 @@
 import numpy as np
 
+def sq_dists(A, B):
+    return (A**2).sum(1)[:, None] - 2 * A @ B.T + (B**2).sum(1)[None, :]
+
 class NMC:
     def fit(self, X, y):
-        self.classes = np.unique(y) #labels
+        self.classes = np.unique(y)
         self.means = []
         for c in self.classes:
             c_drawings = X[y == c]        
             c_mean = np.mean(c_drawings, axis=0)
             self.means.append(c_mean)
-        self.means = np.array(self.means)    # shape (10, number of features)
+        self.means = np.array(self.means)
         return self
 
     def predict(self, X):
@@ -22,4 +25,23 @@ class NMC:
                     best_dist = dist
                     best_class = c
             predictions.append(best_class)
+        return np.array(predictions)
+
+class KNN:
+    def __init__(self, k=5):
+        self.k = k
+
+    def fit(self, X, y):
+        self.X = X
+        self.y = y
+        return self
+
+    def predict(self, X, batch=1000):
+        predictions = []
+        for start in range(0, len(X), batch):
+            d = sq_dists(X[start:start + batch], self.X)
+            nearest = np.argsort(d, axis=1)[:, :self.k]
+            for neighbours in self.y[nearest]:
+                votes = np.bincount(neighbours, minlength=10)
+                predictions.append(np.argmax(votes))
         return np.array(predictions)
