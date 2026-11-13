@@ -49,3 +49,8 @@ def cv_pca_curve(models, sizes, X, y, k=5):
         print(f"fold {f + 1}/{k} done")
 
     return {name: (s.mean(axis=1), s.std(axis=1)) for name, s in scores.items()}
+
+def confusion_matrix(y_true, y_pred, n_classes):
+    cm = np.zeros((n_classes, n_classes), dtype=int)
+    np.add.at(cm, (y_true, y_pred), 1)   # count each (true, predicted) pair
+    return cm
