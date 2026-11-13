@@ -7,10 +7,11 @@ class PCA:
     def fit(self, X):
         self.mean = np.mean(X, axis=0)
         Xc = X - self.mean
-        _, S, Vt = np.linalg.svd(Xc, full_matrices = False)
-        self.components = Vt[:self.k]
-        var = S**2
-        self.explained = var / var.sum()
+        cov = Xc.T @ Xc
+        eigvals, eigvecs = np.linalg.eigh(cov)          # sorted from smallest to largest
+        order = np.argsort(eigvals)[::-1]               # flip to largest first
+        self.components = eigvecs[:, order[:self.k]].T
+        self.explained = eigvals[order] / eigvals.sum()
         return self
 
     def transform(self, X):
@@ -18,4 +19,3 @@ class PCA:
 
     def inverse_transform(self, Z):
         return Z @ self.components + self.mean
-        

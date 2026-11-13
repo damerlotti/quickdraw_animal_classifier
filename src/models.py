@@ -40,8 +40,32 @@ class KNN:
         predictions = []
         for start in range(0, len(X), batch):
             d = sq_dists(X[start:start + batch], self.X)
-            nearest = np.argsort(d, axis=1)[:, :self.k]
+            nearest = np.argpartition(d, self.k, axis=1)[:, :self.k]
             for neighbours in self.y[nearest]:
                 votes = np.bincount(neighbours, minlength=10)
                 predictions.append(np.argmax(votes))
         return np.array(predictions)
+
+class LDA:
+    def __init__(self, lam=1e-3):
+        self.lam = lam
+
+    def fit(self, X, y):
+        self.classes = np.unique(y)
+        n, d = X.shape
+        self.means = np.array([X[y == c].mean(axis=0) for c in self.classes])
+
+        cov = np.zeros((d, d))
+        for c, m in zip(self.classes, self.means):
+            diff = X[y == c] - m
+            cov += diff.T @ diff
+        cov = cov / (n - len(self.classes)) + self.lam * np.eye(d)
+
+        self.W = np.linalg.solve(cov, self.means.T)
+        priors = np.array([np.mean(y == c) for c in self.classes])
+        self.b = -0.5 * np.sum(self.means * self.W.T, axis=1) + np.log(priors)
+        return self
+
+    def predict(self, X):
+        scores = X @ self.W + self.b
+        return self.classes[np.argmax(scores, axis=1)]
